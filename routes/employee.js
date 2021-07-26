@@ -12,7 +12,7 @@ router.get('/employees',(req,res)=>{
     try{
         employees = loadData(file_name)
         if(employees.length == 0)
-            throw new Error('No employee exist')
+            throw new Error('No Employee Found')
         return res.send(employees)
     }
     catch(e){
@@ -26,7 +26,7 @@ router.get('/employees/:id',(req,res)=>{
     try{
         employees = loadData(file_name)
         if(employees.length == 0)
-            throw new Error("No Employee exist")
+            throw new Error("No Employee Found")
         const employee = employees.find(item => item.id == req.params.id)
         if(!employee)
             throw new Error("Employee ID not Found")
@@ -43,7 +43,7 @@ router.post('/employees', (req,res)=>{
     try{
         const {id, name, email, phone} = req.body
 
-        if(id == null && name == null && email == null && phone == null)
+        if(!id||!name|| !email|| !phone)
             throw new Error('All fields are required')
 
         if(!validator.isEmail(email))
