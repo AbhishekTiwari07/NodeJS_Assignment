@@ -1,42 +1,75 @@
 const router = require('express').Router()
+var validator = require('validator')
 const fs = require('fs')
 const loadData = require('../utilities/loadData')
 const saveData = require('../utilities/saveData')
 require('dotenv').config()
 
-const name = process.env.FILE_NAME || 'employees.txt'
+const file_name = process.env.FILE_NAME || 'employees.txt'
 var employees = []
 
 router.get('/employees',(req,res)=>{
-    employees = loadData(name)
-    if(employees.length == 0)
+    try{
+        employees = loadData(file_name)
+        if(employees.length == 0)
+            throw new Error('No employee exist')
+        return res.send(employees)
+    }
+    catch(e){
         return res.send({
-            'message' : 'No employee exist'
+            'message' : e.message
         })
-    res.send(employees)
+    }
 })
 
 router.get('/employees/:id',(req,res)=>{
-    employees = loadData(name)
-    if(!employees)
+    try{
+        employees = loadData(file_name)
+        if(employees.length == 0)
+            throw new Error("No Employee exist")
+        const employee = employees.find(item => item.id == req.params.id)
+        if(!employee)
+            throw new Error("Employee ID not Found")
+        return res.send(employee)
+    }
+    catch(e){
         return res.send({
-            'message' : 'No employee found'
+            'message' : e.message
         })
-    const employee = employees.find(item => item.id == req.params.id)
-    if(!employee)
-        return res.send({
-            "message" : "No employee found"
-        })
-    res.send(employee)
+    }
 })
 
 router.post('/employees', (req,res)=>{
-    data = req.body
-    employees = loadData(name)
-    employees = employees.filter(item => item.id != data.id)
-    employees.push(data)
-    saveData(name, employees)
-    res.send(data)
+    try{
+        const {id, name, email, phone} = req.body
+
+        if(id == null && name == null && email == null && phone == null)
+            throw new Error('All fields are required')
+
+        if(!validator.isEmail(email))
+            throw new Error('Invalid email format')
+
+        employees = loadData(file_name)
+        employees = employees.filter(item => item.id != id)
+        employees.push({
+            id,
+            name,
+            email,
+            phone
+        })
+        saveData(file_name, employees)
+        return res.send({
+            id,
+            name,
+            email,
+            phone
+        })
+    }
+    catch(e){
+        return res.send({
+            'message' : e.message
+        })
+    }
 })
 
 module.exports = router
